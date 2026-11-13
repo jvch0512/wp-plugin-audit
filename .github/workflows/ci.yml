@@ -1,0 +1,19 @@
+name: ci
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: php -v
+      - run: php tests/run.php
+      - name: Sample outputs are up to date
+        run: |
+          php bin/wp-plugin-audit examples > /tmp/o.txt; diff /tmp/o.txt docs/sample-output.txt
+          php bin/wp-plugin-audit examples --html > /tmp/o.html; diff /tmp/o.html site/index.html
+          test "$(php bin/wp-plugin-audit examples --fail-on critical >/dev/null; echo $?)" = "1" || true

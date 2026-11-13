@@ -1,0 +1,40 @@
+CRITICAL WP003 vulnerable-plugin/quick-poll.php:27
+         Code execution function used
+         > eval($_REQUEST['code']);
+         Fix: Remove eval/assert and shell functions, or hard-code and validate every argument.
+HIGH     WP006 vulnerable-plugin/quick-poll.php:4
+         Unauthenticated AJAX handler (wp_ajax_nopriv) that changes data
+         > add_action('wp_ajax_nopriv_qp_vote', 'qp_vote');
+         Fix: Require authentication, or validate a nonce and strictly limit what the endpoint does.
+HIGH     WP005 vulnerable-plugin/quick-poll.php:7
+         AJAX or REST handler without a capability or nonce check
+         > function qp_vote() {
+         Fix: Call current_user_can() and check_ajax_referer() / wp_verify_nonce(), and set a permission_callback on REST routes.
+HIGH     WP001 vulnerable-plugin/quick-poll.php:10
+         SQL built from request data without $wpdb->prepare()
+         > $wpdb->query("UPDATE {$wpdb->prefix}polls SET votes = votes + 1 WHERE id = " . $id);
+         Fix: Use $wpdb->prepare() with placeholders for every dynamic value.
+HIGH     WP005 vulnerable-plugin/quick-poll.php:15
+         AJAX or REST handler without a capability or nonce check
+         > function qp_export() {
+         Fix: Call current_user_can() and check_ajax_referer() / wp_verify_nonce(), and set a permission_callback on REST routes.
+HIGH     WP004 vulnerable-plugin/quick-poll.php:18
+         unserialize() on request data (object injection)
+         > $data = unserialize($_COOKIE['qp_state']);
+         Fix: Use json_decode() for data from users, or unserialize() with allowed_classes => false.
+HIGH     WP002 vulnerable-plugin/quick-poll.php:19
+         Request data echoed without escaping (XSS)
+         > echo "Exported for " . $_GET['user'];
+         Fix: Escape on output: esc_html(), esc_attr(), esc_url() or wp_kses_post() depending on context.
+MEDIUM   WP007 vulnerable-plugin/quick-poll.php:17
+         File include or file operation from request data (path traversal)
+         > include "/var/www/exports/" . $file;
+         Fix: Map user input to a fixed allow-list of files; never concatenate it into a path.
+MEDIUM   WP008 vulnerable-plugin/quick-poll.php:23
+         REST route with __return_true permission callback
+         > register_rest_route('qp/v1', '/results', ['methods' => 'GET', 'callback' => 'qp_results', 'permission_callback' => '__return_true']);
+         Fix: Return a real capability check, or document why the route is public and read-only.
+LOW      WP010 vulnerable-plugin/quick-poll.php:1
+         Direct access not blocked
+         > <?php
+         Fix: Start every PHP file with: if ( ! defined( 'ABSPATH' ) ) { exit; }
