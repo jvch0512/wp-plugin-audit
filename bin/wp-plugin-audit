@@ -1,0 +1,19 @@
+#!/usr/bin/env php
+<?php
+declare(strict_types=1);
+require __DIR__ . '/../src/Audit.php';
+
+use WpPluginAudit\Audit;
+
+$usage = "wp-plugin-audit <plugin-dir> [--json | --html] [--fail-on critical|high|medium|low]\n\nStatic audit of a WordPress plugin. Offline.\nExit codes: 0 ok, 1 findings at or above --fail-on, 2 bad input.\n";
+$a = array_slice($argv, 1);
+if (!$a || str_starts_with($a[0], '--')) { fwrite(STDERR, $usage); exit(2); }
+$dir = array_shift($a);
+$failOn = null;
+if (($i = array_search('--fail-on', $a, true)) !== false) {
+    $failOn = $a[$i + 1] ?? '';
+    if (Audit::severityRank($failOn) > 3) { fwrite(STDERR, "error: --fail-on must be critical, high, medium or low\n"); exit(2); }
+}
+try { $fs = Audit::scanDir($dir); } catch (InvalidArgumentException $e) { fwrite(STDERR, "error: {$e->getMessage()}\n"); exit(2); }
+echo in_array('--html', $a, true) ? Audit::page($fs) : (in_array('--json', $a, true) ? Audit::json($fs) : Audit::text($fs));
+if ($failOn !== null) { foreach ($fs as $f) { if (Audit::severityRank($f->severity) <= Audit::severityRank($failOn)) exit(1); } }

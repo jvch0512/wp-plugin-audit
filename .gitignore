@@ -2,6 +2,6 @@ target/
 *.pyc
 __pycache__/
 node_modules/
-bin/
+
 *.class
 build/
